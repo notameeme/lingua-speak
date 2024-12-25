@@ -3,9 +3,20 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --primary-color: #4A90E2;    
+  --accent-color: #FF6B6B;     
+  --success-color: #4CAF50; 
+  --background-dark: #1A1A1A;  
+}
+
+.custom-bg {
+  background-color: var(--background-dark);
+  background-image: radial-gradient(
+    circle at 2px 2px,
+    rgba(255, 255, 255, 0.1) 1px,
+    transparent 0
+  );
+  background-size: 30px 30px;
 }
 
 @media (prefers-color-scheme: dark) {

@@ -1,48 +1,104 @@
 import { useEffect, useState } from "react";
-import { OpenAI } from "openai";
+import OpenAI from 'openai';
+
+console.log("API Key:", process.env.NEXT_PUBLIC_OPENAI_API_KEY ? "Present" : "Missing");
+console.log("API Key exists:", !!process.env.NEXT_PUBLIC_OPENAI_API_KEY);
 
 const openai = new OpenAI({
-  apiKey: process.env.NEXT_PUBLIC_API_KEY,
+  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY || "", 
   dangerouslyAllowBrowser: true,
 });
 
 const useTranslate = (sourceText, selectedLanguage) => {
   const [targetText, setTargetText] = useState("");
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [translationCache, setTranslationCache] = useState({});
 
   useEffect(() => {
-    const handleTranslate = async (sourceText) => {
+    const handleTranslate = async (text) => {
+      const cacheKey = `${text}-${selectedLanguage}`;
+      
+      if (translationCache[cacheKey]) {
+        setTargetText(translationCache[cacheKey]);
+        return;
+      }
+
       try {
+        setIsLoading(true);
+        setError(null);
+
         const response = await openai.chat.completions.create({
-          model: "gpt-4o",
+          model: "gpt-3.5-turbo",
           messages: [
             {
               role: "user",
-              content: `You will be provided with a sentence. This sentence: 
-              ${sourceText}. Your tasks are to:
-              - Detect what language the sentence is in
-              - Translate the sentence into ${selectedLanguage}
-              Do not return anything other than the translated sentence.`,
+              content: `Translate this text: "${text}" into ${selectedLanguage}`,
             },
           ],
         });
 
-        const data = response.choices[0].message.content;
-        setTargetText(data);
+        const translation = response.choices[0].message.content;
+        
+        setTranslationCache(prev => ({
+          ...prev,
+          [cacheKey]: translation
+        }));
+        
+        setTargetText(translation);
       } catch (error) {
-        console.error("Error translating text:", error);
+        setError(error.message);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    if (sourceText.trim()) {
-      const timeoutId = setTimeout(() => {
+    const timeoutId = setTimeout(() => {
+      if (sourceText.trim()) {
         handleTranslate(sourceText);
-      }, 500); // Adjust the delay as needed
+      }
+    }, 1000);
 
-      return () => clearTimeout(timeoutId);
-    }
+    return () => clearTimeout(timeoutId);
   }, [sourceText, selectedLanguage]);
 
-  return targetText;
+  const detectLanguage = async (text) => {
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "user",
+            content: `What language is this text written in? Only return the language name: "${text}"`,
+          },
+        ],
+      });
+      return response.choices[0].message.content;
+    } catch (error) {
+      console.error("Language detection error:", error);
+      return null;
+    }
+  };
+
+  const getPronunciation = async (text, language) => {
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "user",
+            content: `Provide a simple pronunciation guide for this ${language} text: "${text}"`,
+          },
+        ],
+      });
+      return response.choices[0].message.content;
+    } catch (error) {
+      console.error("Pronunciation guide error:", error);
+      return null;
+    }
+  };
+
+  return { targetText, error, isLoading, detectLanguage, getPronunciation };
 };
 
 export default useTranslate;

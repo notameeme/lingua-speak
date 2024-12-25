@@ -1,6 +1,16 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 
 const SvgDecorations: React.FC = () => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
   return (
     <>
       <div className="hidden z-[200] md:block absolute top-0 end-0 -translate-y-12 translate-x-20">
@@ -18,21 +28,9 @@ const SvgDecorations: React.FC = () => {
             strokeWidth="10"
             strokeLinecap="round"
           />
-          <path
-            d="M33.6761 112.104C44.6984 98.1239 74.2618 57.6776 83.4821 5"
-            stroke="currentColor"
-            strokeWidth="10"
-            strokeLinecap="round"
-          />
-          <path
-            d="M50.5525 130C68.2064 127.495 110.731 117.541 116 78.0874"
-            stroke="currentColor"
-            strokeWidth="10"
-            strokeLinecap="round"
-          />
         </svg>
       </div>
-      <div className="hidden md:block absolute bottom-0 start-0 translate-y-10 -translate-x-32">
+      <div className="hidden z-[200] md:block absolute bottom-0 start-0 translate-y-12 -translate-x-20">
         <svg
           className="w-40 h-auto text-cyan-500"
           width="347"
